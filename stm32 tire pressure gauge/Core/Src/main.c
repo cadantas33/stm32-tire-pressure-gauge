@@ -25,6 +25,7 @@
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
 #include "bmp180_for_stm32_hal.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
