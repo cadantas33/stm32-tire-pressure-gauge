@@ -1,1 +1,0 @@
-# stm32-tire-pressure-gauge
