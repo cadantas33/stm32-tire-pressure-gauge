@@ -21,6 +21,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 #include "ssd1306_conf.h"
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
@@ -49,10 +53,10 @@
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
-double current_pressure[5], pressure_sum, atm_pressure,
-		avg_pressure_psi = 0, avg_pressure_bar = 0;
-
-char psi_buffer[16], bar_buffer[16];
+int linha;
+//int32_t current_pressure[5], pressure_sum, atm_pressure, avg_pressure[2];
+int32_t avg_pressure[2];
+char disp_buff[256];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,6 +73,7 @@ void updatePressure()
 {
 	while (1)
 	{
+		/*
 		atm_pressure = BMP180_GetPressure() * KPA_PSI;
 		if (1 < atm_pressure)
 		{
@@ -76,7 +81,7 @@ void updatePressure()
 			{
 				current_pressure[i] = BMP180_GetPressure();
 				pressure_sum += current_pressure[i];
-				HAL_delay(200);
+				HAL_Delay(200);
 			}
 		}
 		else
@@ -85,23 +90,59 @@ void updatePressure()
 		}
 
 		avg_pressure_psi = (pressure_sum / 5) * KPA_PSI;
-		pressure_bar = avg_pressure_psi * PSI_BAR;
+		avg_pressure_bar = avg_pressure_psi * PSI_BAR; */
+		avg_pressure[1] = BMP180_GetPressure();
+
 	}
 }
 
-void updateDisplay()
+void ssd1306_Escrever(uint8_t col, uint8_t linha, char *texto, bool limpar_tela, bool atualizar_tela)
+{
+  if (limpar_tela)
+    ssd1306_Fill(Black);
+  ssd1306_SetCursor(col, linha);
+  ssd1306_WriteString(texto, Font_7x10, White);
+  if (atualizar_tela)
+    ssd1306_UpdateScreen();
+}
+
+void updateDisplayData()
 {
 	while (1)
 	{
-		sprintf(psi_buffer, "%.2fpsi", avg_pressure_psi);
-		sprintf(bar_buffer, "%.2fpsi", avg_pressure_bar);
+		linha = 0;
+		int32_t tempi = BMP180_GetRawTemperature() / 10;
+		int32_t tempd = BMP180_GetRawTemperature() % 10;
 
-		ssd1306_Fill(Black);
+		//sprintf(psi_buffer, "%ld psi", avg_pressure_psi);
+		//sprintf(bar_buffer, "%ld bar", avg_pressure_bar);
+
+		/*ssd1306_Fill(Black);
+
+		ssd1306_SetCursor(0, 0);
+		ssd1306_WriteString("Temperatura: ", Font_7x10, White);
+
+		ssd1306_SetCursor(0, 40);
+		sprintf((char*)disp_buff, "%ld,%ld", tempi, tempd);
+		ssd1306_WriteString(disp_buff, Font_7x10, White);
+
 		ssd1306_SetCursor(16, 0);
-		ssd1306_WriteString(psi_buffer, Font_16x15, White);
-		ssd1306_SetCursor(16, 16);
-		ssd1306_WriteString(bar_buffer, Font_16x15, White);
-		ssd1306_UpdateScreen();
+		ssd1306_WriteString("Pressao: ", Font_7x10, White);
+
+		ssd1306_SetCursor(16, 40);
+		sprintf((char*)disp_buff, "%ld", avg_pressure_psi);
+		ssd1306_WriteString(disp_buff, Font_7x10, White);
+		ssd1306_UpdateScreen(); */
+
+		ssd1306_Escrever(0, linha+=8, "temperatura: ", true, false);
+		sprintf((char*)disp_buff, "%ld,%ld", tempi, tempd);
+		ssd1306_Escrever(0, linha+=16, disp_buff, false, false);
+
+		ssd1306_Escrever(0, linha+=8, "pressao: ", false, false);
+		sprintf((char*)disp_buff, "%ld kPa", avg_pressure[1]);
+		ssd1306_Escrever(0, linha+=16, disp_buff, false, true);
+
+		HAL_Delay(1000);
 	}
 }
 /* USER CODE END 0 */
@@ -152,7 +193,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  updatePressure();
-	  updateDisplay();
+	  updateDisplayData();
   }
   /* USER CODE END 3 */
 }
