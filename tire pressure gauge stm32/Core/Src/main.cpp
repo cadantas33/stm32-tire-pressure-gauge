@@ -57,7 +57,7 @@
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
-float current_pressure, avg_pressure, avg_pressure_bar = 0.0f;
+float current_pressure, avg_pressure; //avg_pressure_bar = 0.0f;
 int row;
 char display_buffer[150];
 
@@ -140,7 +140,7 @@ int main(void)
 					HAL_Delay(200);
 				}
 				avg_pressure = current_pressure / 5;
-				avg_pressure_bar = current_pressure * PSI_BAR;
+				//avg_pressure_bar = avg_pressure * PSI_BAR;
 			}
 			else
 			{
@@ -154,7 +154,7 @@ int main(void)
 	  	sprintf((char *)display_buffer, "%.2f psi", avg_pressure);
 	  	ssd1306_Write(0, row+=12, display_buffer, false, false);
 
-	  	sprintf((char *)display_buffer, "%.2f bar", avg_pressure_bar);
+	  	sprintf((char *)display_buffer, "%.2f bar", avg_pressure * PSI_BAR);
 	  	ssd1306_Write(0, row+=12, display_buffer, false, false);
     /* USER CODE BEGIN 3 */
   }
