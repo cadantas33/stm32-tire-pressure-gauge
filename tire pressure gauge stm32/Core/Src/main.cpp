@@ -32,7 +32,8 @@
 #include "ssd1306_conf.h"
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
-#include "bmp180_for_stm32_hal.h"
+#include "cSMP3011.h"
+//#include "bmp180_for_stm32_hal.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,9 +57,11 @@
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
-int32_t current_pressure, avg_pressure, avg_pressure_bar = 0;
+float current_pressure, avg_pressure, avg_pressure_bar = 0.0f;
 int row;
 char display_buffer[150];
+
+cSMP3011 sensor;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,6 +74,7 @@ static void MX_I2C1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 void ssd1306_Write(uint8_t col, uint8_t row, char *texto, bool limpar_tela, bool atualizar_tela) {
   if (limpar_tela)
     ssd1306_Fill(Black);
@@ -113,10 +117,10 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   ssd1306_Init();
-
-  BMP180_Init(&hi2c1);
-  BMP180_SetOversampling(BMP180_ULTRA);
-  BMP180_UpdateCalibrationData();
+  sensor.init(&hi2c1);
+  //BMP180_Init(&hi2c1);
+  //BMP180_SetOversampling(BMP180_ULTRA);
+  //BMP180_UpdateCalibrationData();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -125,30 +129,33 @@ int main(void)
   {
     /* USER CODE END WHILE */
 	// Função de medição da pressão
-	  		current_pressure = BMP180_GetPressure();
-	  		if (current_pressure * KPA_PSI > 1.0f)
-	  		{
-	  			for(int i = 0; i < 5; i++)
-	  			{
-					current_pressure += BMP180_GetPressure();
+	  if(sensor.poll() == HAL_OK)
+	  {
+	  current_pressure = sensor.getPressure();
+		  if (current_pressure * KPA_PSI > 1.0f)
+			{
+				for(int i = 0; i < 5; i++)
+				{
+					current_pressure += sensor.getPressure();
 					HAL_Delay(200);
-	  			}
-	  			avg_pressure = current_pressure / 5;
-	  			avg_pressure_bar = current_pressure * PSI_BAR;
-	  		}
-	  		else
-	  		{
-	  			avg_pressure = 0;
-	  		}
+				}
+				avg_pressure = current_pressure / 5;
+				avg_pressure_bar = current_pressure * PSI_BAR;
+			}
+			else
+			{
+				avg_pressure = 0;
+			}
+	  }
 
-	  		row = 0;
+	  	row = 0;
 
-	  		// Exibição da pressão no display
-	  		sprintf((char *)display_buffer, "%.2f psi", avg_pressure);
-	  		ssd1306_Write(0, row+=12, display_buffer, false, false);
+	  	// Exibição da pressão no display
+	  	sprintf((char *)display_buffer, "%.2f psi", avg_pressure);
+	  	ssd1306_Write(0, row+=12, display_buffer, false, false);
 
-	  		sprintf((char *)display_buffer, "%.2f bar", avg_pressure_bar);
-	  		ssd1306_Write(0, row+=12, display_buffer, false, false);
+	  	sprintf((char *)display_buffer, "%.2f bar", avg_pressure_bar);
+	  	ssd1306_Write(0, row+=12, display_buffer, false, false);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
