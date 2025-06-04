@@ -32,7 +32,7 @@
 #include "ssd1306_conf.h"
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
-#include "cSMP3011.h"
+#include "smp3011.h"
 //#include "bmp180_for_stm32_hal.h"
 /* USER CODE END Includes */
 
@@ -60,8 +60,6 @@ I2C_HandleTypeDef hi2c1;
 float current_pressure, avg_pressure; //avg_pressure_bar = 0.0f;
 int row;
 char display_buffer[150];
-
-cSMP3011 sensor;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -117,7 +115,7 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   ssd1306_Init();
-  sensor.init(&hi2c1);
+  smp3011_init(&hi2c1);
   //BMP180_Init(&hi2c1);
   //BMP180_SetOversampling(BMP180_ULTRA);
   //BMP180_UpdateCalibrationData();
@@ -129,14 +127,12 @@ int main(void)
   {
     /* USER CODE END WHILE */
 	// Função de medição da pressão
-	  if(sensor.poll() == HAL_OK)
-	  {
-	  current_pressure = sensor.getPressure();
+	  current_pressure = smp3011_get_pressure();
 		  if (current_pressure * KPA_PSI > 1.0f)
 			{
 				for(int i = 0; i < 5; i++)
 				{
-					current_pressure += sensor.getPressure();
+					current_pressure += smp3011_get_pressure();
 					HAL_Delay(200);
 				}
 				avg_pressure = current_pressure / 5;
@@ -146,7 +142,6 @@ int main(void)
 			{
 				avg_pressure = 0;
 			}
-	  }
 
 	  	row = 0;
 
