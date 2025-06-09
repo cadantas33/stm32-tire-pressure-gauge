@@ -67,7 +67,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-
+#define PRINTF2UART2 int __io_putchar(int data)
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -125,7 +125,6 @@ int main(void) {
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		/* USER CODE END WHILE */
-		// Função de medição da pressão
 		current_pressure = smp3011_get_pressure();
 		if (current_pressure * PA_PSI > 1.0f) {
 			for (int i = 0; i < 5; i++) {
@@ -143,6 +142,8 @@ int main(void) {
 		// Exibição da pressão no display
 		sprintf((char*) display_buffer, "%.2f psi", avg_pressure);
 		ssd1306_Write(0, row += 12, display_buffer, false, true);
+		// Exibir valores no monitor serial
+		//printf(display_buffer);
 
 		sprintf((char*) display_buffer, "%.2f bar", avg_pressure * PSI_BAR);
 		ssd1306_Write(0, row += 12, display_buffer, false, true);
@@ -152,13 +153,14 @@ int main(void) {
 			ssd1306_Write(0, row += 18, "Inicie a medicao", false, true);
 		} else if (30.0f > avg_pressure) {
 			ssd1306_Write(0, row += 18, "Pressao baixa! Calibragem necessaria",
-					false, false);
+			false, false);
 		} else if (35.0f >= avg_pressure && avg_pressure >= 30.0f) {
 			ssd1306_Write(0, row += 18, "Pressao OK!", false, true);
 		} else {
 			ssd1306_Write(0, row += 18, "Pressao alta! Calibragem necessaria",
-					false, false);
+			false, false);
 		}
+
 		HAL_Delay(20);
 		/* USER CODE BEGIN 3 */
 	}
@@ -264,7 +266,11 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
-
+// Função para ativação e exibição de dados no monitor serial
+/*PRINTF2UART2 {
+	HAL_UART_Transmit(&huart2, (uint8_t*) &data, 1, 0xFFFF);
+	return data;
+}*/
 /* USER CODE END 4 */
 
 /**
