@@ -131,7 +131,7 @@ int main(void) {
 				current_pressure += smp3011_get_pressure();
 				HAL_Delay(200);
 			}
-			avg_pressure = current_pressure / 5;
+			avg_pressure = (current_pressure * PA_PSI) / 5;
 			//avg_pressure_bar = avg_pressure * PSI_BAR;
 		} else {
 			avg_pressure = 0;
