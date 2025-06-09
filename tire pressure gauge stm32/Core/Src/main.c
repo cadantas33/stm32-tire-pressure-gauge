@@ -268,9 +268,9 @@ static void MX_GPIO_Init(void) {
 /* USER CODE BEGIN 4 */
 // Função para ativação e exibição de dados no monitor serial
 /*PRINTF2UART2 {
-	HAL_UART_Transmit(&huart2, (uint8_t*) &data, 1, 0xFFFF);
-	return data;
-}*/
+ HAL_UART_Transmit(&huart2, (uint8_t*) &data, 1, 0xFFFF);
+ return data;
+ }*/
 /* USER CODE END 4 */
 
 /**
