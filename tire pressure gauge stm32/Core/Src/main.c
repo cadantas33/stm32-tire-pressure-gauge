@@ -43,7 +43,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define KPA_PSI		0.145038
+#define PA_PSI		0.001450
 #define PSI_BAR		0.068947
 /* USER CODE END PD */
 
@@ -127,7 +127,7 @@ int main(void) {
 		/* USER CODE END WHILE */
 		// Função de medição da pressão
 		current_pressure = smp3011_get_pressure();
-		if (current_pressure * KPA_PSI > 1.0f) {
+		if (current_pressure * PA_PSI > 1.0f) {
 			for (int i = 0; i < 5; i++) {
 				current_pressure += smp3011_get_pressure();
 				HAL_Delay(200);
@@ -142,21 +142,21 @@ int main(void) {
 
 		// Exibição da pressão no display
 		sprintf((char*) display_buffer, "%.2f psi", avg_pressure);
-		ssd1306_Write(0, row += 12, display_buffer, false, false);
+		ssd1306_Write(0, row += 12, display_buffer, false, true);
 
 		sprintf((char*) display_buffer, "%.2f bar", avg_pressure * PSI_BAR);
-		ssd1306_Write(0, row += 12, display_buffer, false, false);
+		ssd1306_Write(0, row += 12, display_buffer, false, true);
 
 		// Exibição de avisos no display
 		if (0 == avg_pressure) {
-			ssd1306_Write(0, row += 18, "Inicie a medição", false, false);
+			ssd1306_Write(0, row += 18, "Inicie a medicao", false, true);
 		} else if (30.0f > avg_pressure) {
-			ssd1306_Write(0, row += 18, "Pressão baixa! Calibragem necessária",
+			ssd1306_Write(0, row += 18, "Pressao baixa! Calibragem necessaria",
 					false, false);
 		} else if (35.0f >= avg_pressure && avg_pressure >= 30.0f) {
-			ssd1306_Write(0, row += 18, "Pressão OK!", false, false);
+			ssd1306_Write(0, row += 18, "Pressao OK!", false, true);
 		} else {
-			ssd1306_Write(0, row += 18, "Pressão alta! Calibragem necessária",
+			ssd1306_Write(0, row += 18, "Pressao alta! Calibragem necessaria",
 					false, false);
 		}
 		HAL_Delay(20);
