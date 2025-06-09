@@ -26,14 +26,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
 #include "ssd1306_conf.h"
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
 #include "smp3011.h"
-//#include "bmp180_for_stm32_hal.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,7 +54,7 @@ I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
 float current_pressure, avg_pressure; //avg_pressure_bar = 0.0f;
-int row;
+
 char display_buffer[150];
 /* USER CODE END PV */
 
@@ -67,21 +63,21 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-#define PRINTF2UART2 int __io_putchar(int data)
+//#define PRINTF2UART2 int __io_putchar(int data)
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void ssd1306_Write(uint8_t col, uint8_t row, char *texto, bool limpar_tela,
-bool atualizar_tela) {
-	if (limpar_tela)
-		ssd1306_Fill(Black);
-	ssd1306_SetCursor(col, row);
-	ssd1306_WriteString(texto, Font_7x10, White);
-	if (atualizar_tela)
-		ssd1306_UpdateScreen();
-}
+/*void ssd1306_Write(uint8_t col, uint8_t row, char *texto, bool limpar_tela,
+ bool atualizar_tela) {
+ if (limpar_tela)
+ ssd1306_Fill(Black);
+ ssd1306_SetCursor(col, row);
+ ssd1306_WriteString(texto, Font_7x10, White);
+ if (atualizar_tela)
+ ssd1306_UpdateScreen();
+ }*/
 /* USER CODE END 0 */
 
 /**
@@ -116,51 +112,47 @@ int main(void) {
 	/* USER CODE BEGIN 2 */
 	ssd1306_Init();
 	smp3011_init(&hi2c1);
-	//BMP180_Init(&hi2c1);
-	//BMP180_SetOversampling(BMP180_ULTRA);
-	//BMP180_UpdateCalibrationData();
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		/* USER CODE END WHILE */
+		smp3011_read();
 		current_pressure = smp3011_get_pressure();
-		if (current_pressure * PA_PSI > 1.0f) {
+		if (current_pressure * PA_PSI > 1) {
 			for (int i = 0; i < 5; i++) {
 				current_pressure += smp3011_get_pressure();
 				HAL_Delay(200);
 			}
 			avg_pressure = (current_pressure * PA_PSI) / 5;
-			//avg_pressure_bar = avg_pressure * PSI_BAR;
 		} else {
 			avg_pressure = 0;
 		}
 
-		row = 0;
-
 		// Exibição da pressão no display
-		sprintf((char*) display_buffer, "%.2f psi", avg_pressure);
-		ssd1306_Write(0, row += 12, display_buffer, false, true);
-		// Exibir valores no monitor serial
-		//printf(display_buffer);
+		snprintf((char*) display_buffer, sizeof(display_buffer), "%.2f psi",
+				current_pressure);
+		ssd1306_SetCursor(0, 17);
+		ssd1306_WriteString(display_buffer, Font_7x10, White);
 
-		sprintf((char*) display_buffer, "%.2f bar", avg_pressure * PSI_BAR);
-		ssd1306_Write(0, row += 12, display_buffer, false, true);
+		snprintf((char*) display_buffer, sizeof(display_buffer), "%.2f bar",
+				avg_pressure * PSI_BAR);
+		ssd1306_SetCursor(0, 32);
+		ssd1306_WriteString(display_buffer, Font_7x10, White);
 
 		// Exibição de avisos no display
+		ssd1306_SetCursor(0, 0);
 		if (0 == avg_pressure) {
-			ssd1306_Write(0, row += 18, "Inicie a medicao", false, true);
-		} else if (30.0f > avg_pressure) {
-			ssd1306_Write(0, row += 18, "Pressao baixa! Calibragem necessaria",
-			false, false);
-		} else if (35.0f >= avg_pressure && avg_pressure >= 30.0f) {
-			ssd1306_Write(0, row += 18, "Pressao OK!", false, true);
+			ssd1306_WriteString("Iniciar medicao", Font_7x10, White);
+		} else if (30 > avg_pressure) {
+			ssd1306_WriteString("Pressao baixa", Font_7x10, White);
+		} else if (35 >= avg_pressure && avg_pressure >= 30) {
+			ssd1306_WriteString("Pressao OK", Font_7x10, White);
 		} else {
-			ssd1306_Write(0, row += 18, "Pressao alta! Calibragem necessaria",
-			false, false);
+			ssd1306_WriteString("Pressao alta", Font_7x10, White);
 		}
-
+		ssd1306_UpdateScreen();
 		HAL_Delay(20);
 		/* USER CODE BEGIN 3 */
 	}
@@ -266,11 +258,7 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
-// Função para ativação e exibição de dados no monitor serial
-/*PRINTF2UART2 {
- HAL_UART_Transmit(&huart2, (uint8_t*) &data, 1, 0xFFFF);
- return data;
- }*/
+
 /* USER CODE END 4 */
 
 /**
