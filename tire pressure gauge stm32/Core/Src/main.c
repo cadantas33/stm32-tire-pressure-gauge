@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <stdbool.h>
 #include "ssd1306_conf.h"
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
@@ -39,8 +40,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define PA_PSI		0.001450
-#define PSI_BAR		0.068947
+#define CAL_SAMP	30
+#define PA_PSI_X10	68947
+#define PSI_BAR		689
+#define SCALE		1000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,9 +56,11 @@
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
-float current_pressure, avg_pressure; //avg_pressure_bar = 0.0f;
-
-char display_buffer[150];
+int32_t pressure_offset = 0, current_pressure_cal, avg_pressure,
+		avg_pressure_bar;
+int row;
+char display_buffer[64];
+bool isCalibrated = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,15 +74,27 @@ static void MX_I2C1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-/*void ssd1306_Write(uint8_t col, uint8_t row, char *texto, bool limpar_tela,
- bool atualizar_tela) {
- if (limpar_tela)
- ssd1306_Fill(Black);
- ssd1306_SetCursor(col, row);
- ssd1306_WriteString(texto, Font_7x10, White);
- if (atualizar_tela)
- ssd1306_UpdateScreen();
- }*/
+void ssd1306_Write(uint8_t col, uint8_t row, char *texto, bool limpar_tela,
+bool atualizar_tela) {
+	if (limpar_tela)
+		ssd1306_Fill(Black);
+	ssd1306_SetCursor(col, row);
+	ssd1306_WriteString(texto, Font_7x10, White);
+	if (atualizar_tela)
+		ssd1306_UpdateScreen();
+}
+
+void smp3011_calibrate(int samples) {
+	for (int num = 0; num < samples; num++) {
+		smp3011_read();
+		pressure_offset += smp3011_get_pressure();
+		HAL_Delay(100);
+	}
+	pressure_offset /= CAL_SAMP;
+
+	isCalibrated = true;
+
+}
 /* USER CODE END 0 */
 
 /**
@@ -112,47 +129,56 @@ int main(void) {
 	/* USER CODE BEGIN 2 */
 	ssd1306_Init();
 	smp3011_init(&hi2c1);
+
+	smp3011_calibrate(CAL_SAMP);
+	ssd1306_Write(0, 0, "Calibrando...", true, true);
+
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		/* USER CODE END WHILE */
+		row = 0;
 		smp3011_read();
-		current_pressure = smp3011_get_pressure();
-		if (current_pressure * PA_PSI > 1) {
-			for (int i = 0; i < 5; i++) {
-				current_pressure += smp3011_get_pressure();
-				HAL_Delay(200);
+		if (isCalibrated == true) {
+
+			current_pressure_cal = smp3011_get_pressure() - pressure_offset;
+			if (current_pressure_cal > 0) {		// 1 ATM = 101325Pa
+				for (int i = 0; i < 5; i++) {
+					current_pressure_cal += current_pressure_cal;
+					HAL_Delay(200);
+				}
+				avg_pressure = ((20000 * SCALE) / PA_PSI_X10);		// / 5;
+				avg_pressure_bar = (avg_pressure * 6894) / 1000;
+			} else {
+				avg_pressure = 0;
 			}
-			avg_pressure = (current_pressure * PA_PSI) / 5;
-		} else {
-			avg_pressure = 0;
 		}
-
 		// Exibição da pressão no display
-		snprintf((char*) display_buffer, sizeof(display_buffer), "%.2f psi",
-				current_pressure);
-		ssd1306_SetCursor(0, 17);
-		ssd1306_WriteString(display_buffer, Font_7x10, White);
+		snprintf((char*) display_buffer, sizeof(display_buffer),
+				"%ld.%01ld psi", avg_pressure / 10, avg_pressure % 10);
+		ssd1306_Write(0, row += 16, display_buffer, false, false);
 
-		snprintf((char*) display_buffer, sizeof(display_buffer), "%.2f bar",
-				avg_pressure * PSI_BAR);
-		ssd1306_SetCursor(0, 32);
-		ssd1306_WriteString(display_buffer, Font_7x10, White);
+		snprintf((char*) display_buffer, sizeof(display_buffer),
+				"%ld.%01ld bar", avg_pressure_bar / 10, avg_pressure_bar % 10);
+		ssd1306_Write(0, row += 24, display_buffer, false, false);
+
+		snprintf((char*) display_buffer, sizeof(display_buffer),
+				"%ld.%01ld Pa avg", current_pressure_cal / 5);
+		ssd1306_Write(0, row += 20, display_buffer, false, false);
 
 		// Exibição de avisos no display
-		ssd1306_SetCursor(0, 0);
 		if (0 == avg_pressure) {
-			ssd1306_WriteString("Iniciar medicao", Font_7x10, White);
+			ssd1306_Write(0, 0, "Iniciar medicao	", false, true);
 		} else if (30 > avg_pressure) {
-			ssd1306_WriteString("Pressao baixa", Font_7x10, White);
+			ssd1306_Write(0, 0, "Pressao baixa!	", false, true);
 		} else if (35 >= avg_pressure && avg_pressure >= 30) {
-			ssd1306_WriteString("Pressao OK", Font_7x10, White);
+			ssd1306_Write(0, 0, "Pressao OK!	", false, true);
 		} else {
-			ssd1306_WriteString("Pressao alta", Font_7x10, White);
+			ssd1306_Write(0, 0, "Pressao alta!	", false, true);
 		}
-		ssd1306_UpdateScreen();
+
 		HAL_Delay(20);
 		/* USER CODE BEGIN 3 */
 	}
