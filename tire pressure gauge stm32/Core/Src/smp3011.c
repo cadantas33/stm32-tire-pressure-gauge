@@ -9,7 +9,7 @@
 #define SMP3011_MAX_RANGE_PA            (500000.0f)
 #define SMP3011_MIN_RANGE_PA            (0.0f)
 
-#define SMP3011_PRESSURE_RESOLUTION     (16777216.0f)
+#define SMP3011_PRESSURE_RESOLUTION     (16777215.0f)
 #define SMP3011_TEMPERATURE_RESOLUTION  (65536.0f)
 #define SMP3011_ADDRESS                 (0x78 << 1)
 #define SMP3011_MAX_TEMPERATURE         (150.0f)
@@ -21,8 +21,8 @@
 #define SMP3011_START_CONVERTION        0xAC
 
 I2C_HandleTypeDef *_smp3011_ui2c;
-uint32_t _smp3011_temp;
-uint32_t _smp3011_pres;
+int32_t _smp3011_temp;
+int32_t _smp3011_pres;
 
 void smp3011_init(I2C_HandleTypeDef *hi2c)
 {
@@ -63,8 +63,8 @@ void smp3011_read()
 
       float _pres = (((pressurePercentage - SMP3011_MIN_PRESSURE_PERCENTAGE)/(SMP3011_MAX_PRESSURE_PERCENTAGE - SMP3011_MIN_PRESSURE_PERCENTAGE)) * (SMP3011_MAX_RANGE_PA-SMP3011_MIN_RANGE_PA)) + SMP3011_MIN_RANGE_PA;
       float _temp = ((SMP3011_MAX_TEMPERATURE - SMP3011_MIN_TEMPERATURE)*temperaturePercentage) + SMP3011_MIN_TEMPERATURE;
-      _smp3011_pres = (uint32_t) _pres;
-      _smp3011_temp = (uint32_t) _temp;
+      _smp3011_pres = (int32_t) _pres;
+      _smp3011_temp = (int32_t) _temp;
 
     }
   }
