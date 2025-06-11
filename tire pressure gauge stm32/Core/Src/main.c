@@ -40,10 +40,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CAL_SAMP	30
-#define PA_PSI_X10	68947
-#define PSI_BAR		689
-#define SCALE		1000
+#define CAL_SAMP		30
+#define PA_PSI_X10		68947
+#define PSI_BAR_X100	6894
+#define SCALE			1000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -59,7 +59,7 @@ I2C_HandleTypeDef hi2c1;
 int32_t pressure_offset = 0, current_pressure_cal, avg_pressure,
 		avg_pressure_bar;
 int row;
-char display_buffer[64];
+char display_buffer[116];
 bool isCalibrated = false;
 /* USER CODE END PV */
 
@@ -150,7 +150,7 @@ int main(void) {
 					HAL_Delay(200);
 				}
 				avg_pressure = ((20000 * SCALE) / PA_PSI_X10);		// / 5;
-				avg_pressure_bar = (avg_pressure * 6894) / 1000;
+				avg_pressure_bar = (avg_pressure * PSI_BAR_X100) / 10000;
 			} else {
 				avg_pressure = 0;
 			}
@@ -161,25 +161,28 @@ int main(void) {
 		ssd1306_Write(0, row += 16, display_buffer, false, false);
 
 		snprintf((char*) display_buffer, sizeof(display_buffer),
-				"%ld.%01ld bar", avg_pressure_bar / 10, avg_pressure_bar % 10);
-		ssd1306_Write(0, row += 24, display_buffer, false, false);
+				"%ld.%01ld bar", avg_pressure_bar / 100, avg_pressure_bar % 100);
+		ssd1306_Write(0, row += 20, display_buffer, false, false);
 
 		snprintf((char*) display_buffer, sizeof(display_buffer),
-				"%ld.%01ld Pa avg", current_pressure_cal / 5);
-		ssd1306_Write(0, row += 20, display_buffer, false, false);
+				"%ld Pa avg", current_pressure_cal / 5);
+		ssd1306_Write(0, row += 28, display_buffer, false, false);
 
 		// Exibição de avisos no display
 		if (0 == avg_pressure) {
-			ssd1306_Write(0, 0, "Iniciar medicao	", false, true);
-		} else if (30 > avg_pressure) {
-			ssd1306_Write(0, 0, "Pressao baixa!	", false, true);
-		} else if (35 >= avg_pressure && avg_pressure >= 30) {
-			ssd1306_Write(0, 0, "Pressao OK!	", false, true);
-		} else {
-			ssd1306_Write(0, 0, "Pressao alta!	", false, true);
-		}
+			ssd1306_Write(0, 0, "Inicie...", false, false);
 
-		HAL_Delay(20);
+		} else if (30 > avg_pressure) {
+			ssd1306_Write(0, 0, "Pressao baixa!	", false, false);
+
+		} else if (35 >= avg_pressure && avg_pressure >= 30) {
+			ssd1306_Write(0, 0, "Pressao OK!	", false, false);
+
+		} else {
+			ssd1306_Write(0, 0, "Pressao alta!	", false, false);
+
+		}
+		HAL_Delay(100);
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
