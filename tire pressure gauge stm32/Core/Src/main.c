@@ -42,7 +42,7 @@
 /* USER CODE BEGIN PD */
 #define CAL_SAMP		30
 #define PA_PSI_X10		68947
-#define PSI_BAR_X100	6894
+#define PSI_BAR_X100		6894
 #define SCALE			1000
 /* USER CODE END PD */
 
