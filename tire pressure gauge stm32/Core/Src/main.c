@@ -143,12 +143,12 @@ int main(void) {
 		if (isCalibrated == true) {
 
 			current_pressure_cal = smp3011_get_pressure() - pressure_offset;
-			if (current_pressure_cal > 0) {		// 1 ATM = 101325Pa
+			if (current_pressure_cal > 0) {	
 				for (int i = 0; i < 5; i++) {
 					current_pressure_cal += current_pressure_cal;
 					HAL_Delay(200);
 				}
-				avg_pressure = ((20000 * SCALE) / PA_PSI_X10);		// / 5;
+				avg_pressure = ((20000 * SCALE) / PA_PSI_X10);
 				avg_pressure_bar = (avg_pressure * PSI_BAR_X100) / 10000;
 			} else {
 				avg_pressure = 0;
