@@ -148,7 +148,7 @@ int main(void) {
 					current_pressure_cal += current_pressure_cal;
 					HAL_Delay(200);
 				}
-				avg_pressure = ((20000 * SCALE) / PA_PSI_X10);
+				avg_pressure = ((current_pressure_cal * SCALE) / PA_PSI_X10);
 				avg_pressure_bar = (avg_pressure * PSI_BAR_X100) / 10000;
 			} else {
 				avg_pressure = 0;
