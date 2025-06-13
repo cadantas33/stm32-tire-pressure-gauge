@@ -138,7 +138,6 @@ int main(void) {
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
-		/* USER CODE END WHILE */
 		row = 0;
 		smp3011_read();
 		if (isCalibrated == true) {
@@ -183,6 +182,8 @@ int main(void) {
 
 		}
 		HAL_Delay(100);
+		/* USER CODE END WHILE */
+		
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
