@@ -142,7 +142,7 @@ int main(void) {
 		smp3011_read();
 		if (isCalibrated == true) {
 
-			current_pressure_cal = smp3011_get_pressure() - pressure_offset;
+			current_pressure_cal = smp3011_get_pressure() - pressure_offset; // Isso (talvez) deve ajustar o diferencial do sensor para zero.
 			if (current_pressure_cal > 0) {	
 				for (int i = 0; i < 5; i++) {
 					current_pressure_cal += current_pressure_cal;
